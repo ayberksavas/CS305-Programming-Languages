@@ -1,0 +1,114 @@
+%{
+#include <stdio.h>
+
+int line_number=1;
+
+int comment_counter=0;
+
+%}
+
+%option noyywrap
+
+%x comment
+
+id [a-zA-Z][a-zA-Z0-9_]*
+
+num[0-9]+
+
+string \"[^\"]+\"
+
+string2 \"[^\"]+.
+
+date[0-9]{2}\.[0-9]{2}\.[0-9]{4}
+ 
+time[0-9]{2}\.[0-9]{2} 
+
+%%
+
+\r\n      { line_number++; }
+\r        { line_number++; }
+\n        { line_number++; }
+
+"//".* 
+
+"/*" {
+comment_counter++;
+BEGIN(comment);}
+
+<comment>"/*" {comment_counter++;}
+
+<comment>"*/" {
+comment_counter--;
+if(comment_counter==0){BEGIN(INITIAL);}
+else if (comment_counter<0){
+comment_counter=0;} }
+
+<comment>\n {line_number++;}
+
+<comment>. ;
+
+{string} { printf("%d_tSTRING_(%s)\n", line_number, yytext);
+int i;
+    for (i = 0; yytext[i]; i++) {
+        if (yytext[i] == '\n') {
+            line_number++;
+        }
+    }
+}
+{string2} {
+printf("%d_tSTRING_(%s)\n", line_number, yytext);
+    for (int i = 0; yytext[i] != '\0'; i++) {
+        if (yytext[i] == '\n') {
+            line_number++;
+        }
+   }
+
+}
+
+"Meeting"          { printf("%d_tSTARTMEETING\n", line_number); }
+"endMeeting"       { printf("%d_tENDMEETING\n", line_number); }
+"subMeetings"      { printf("%d_tSTARTSUBMEETINGS\n", line_number); }
+"endSubMeetings"   { printf("%d_tENDSUBMEETINGS\n", line_number); }
+"meetingNumber"    { printf("%d_tMEETINGNUMBER\n", line_number); }
+"description"      { printf("%d_tDESCRIPTION\n", line_number); }
+"startDate"        { printf("%d_tSTARTDATE\n", line_number); }
+"endDate"          { printf("%d_tENDDATE\n", line_number); }
+"startTime"        { printf("%d_tSTARTTIME\n", line_number); }
+"endTime"          { printf("%d_tENDTIME\n", line_number); }
+"locations"        { printf("%d_tLOCATIONS\n", line_number); }
+"isRecurring"      { printf("%d_tISRECURRING\n", line_number); }
+"frequency"        { printf("%d_tFREQUENCY\n", line_number); }
+"repetitionCount"  { printf("%d_tREPETITIONCOUNT\n", line_number); }
+"daily"           { printf("%d_tDAILY\n", line_number); }
+"weekly"          { printf("%d_tWEEKLY\n", line_number); }
+"monthly"         { printf("%d_tMONTHLY\n", line_number); }
+"yearly"          { printf("%d_tYEARLY\n", line_number); }
+"yes"             { printf("%d_tYES\n", line_number); }
+"no"              { printf("%d_tNO\n", line_number); }
+
+"=" { printf("%d_tASSIGN\n", line_number); }
+"," { printf("%d_tCOMMA\n", line_number); }
+
+{id} { printf("%d_tIDENTIFIER_(%s)\n", line_number, yytext); }
+
+{num} { printf("%d_tINTEGER_(%s)\n", line_number, yytext); }
+
+{date} { printf("%d_tDATE_(%s)\n", line_number, yytext); }
+
+{time} { printf("%d_tTIME_(%s)\n", line_number, yytext); }
+
+
+[ \t\r]+ ; 
+
+. {printf("%d_ILLEGAL_CHARACTER_(%s)\n",line_number,yytext);
+int i;
+    for (i = 0; yytext[i]; i++) {
+        if (yytext[i] == '\n') {
+            line_number++; }}}
+
+
+%%
+int main(){
+yylex();
+return 0;
+}
